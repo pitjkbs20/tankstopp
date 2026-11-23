@@ -1,7 +1,7 @@
 // Tankstopp Service Worker
 // Eigene Dateien: erst Netz (Updates kommen sofort), offline aus dem Speicher.
 // Schriften: aus dem Speicher (ändern sich nie).
-const CACHE = "tankstopp-v1";
+const CACHE = "tankstopp-v3";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
