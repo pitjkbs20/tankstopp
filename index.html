@@ -34,12 +34,13 @@ button,input{font:inherit;color:inherit}
 .lab{font-family:"Saira Condensed",sans-serif;font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
 
 /* Kopf */
-.top{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 2px 12px}
 .logo{display:flex;align-items:center;gap:8px}
 .logo svg{width:28px;height:28px}
+.ver{font-family:"Saira Condensed",sans-serif;font-weight:600;font-size:12px;color:var(--soft);align-self:flex-start;margin-left:-4px;letter-spacing:.04em}
 .logo b{font-family:"Saira Condensed",sans-serif;font-weight:800;font-size:20px;letter-spacing:.06em;text-transform:uppercase}
 .seg{display:flex;border:1px solid var(--line)}
-.seg button{border:none;background:none;padding:6px 9px;font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+.seg button{border:none;background:none;padding:6px 8px;font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#000}
 .seg button[data-m="race"][aria-pressed="true"]{background:var(--race);color:#000}
@@ -147,7 +148,14 @@ button,input{font:inherit;color:inherit}
 .zbar button{padding:10px 18px;border:none;background:var(--cell2);font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .zbar button:first-child{background:var(--ink);color:#000}
 .zhint{color:var(--soft);font-size:13px;max-width:290px;text-align:center;margin:0}
-@media print{ body *{visibility:hidden} .strip,.strip *{visibility:visible} .strip{position:absolute;left:0;top:0} }
+.ztabs{display:flex;border:1px solid var(--line)}
+.ztabs button{border:none;background:none;padding:8px 14px;font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+.ztabs button+button{border-left:1px solid var(--line)}
+.ztabs button[aria-pressed="true"]{background:var(--ink);color:#000}
+.zimg{display:block;width:170px;height:auto;-webkit-touch-callout:default;box-shadow:0 0 0 1px #333}
+.zname{width:260px;background:var(--cell2);border:1px solid var(--line);color:var(--ink);font-size:16px;padding:9px 10px;border-radius:0}
+.zimg.lock{width:220px}
+@media print{ body *{visibility:hidden} .zimg{visibility:visible;position:absolute;left:0;top:0;width:42mm;box-shadow:none} }
 @media (max-width:370px){ .f.xl .num{font-size:68px} .durv .num{font-size:54px} }
 </style>
 </head>
@@ -160,7 +168,7 @@ button,input{font:inherit;color:inherit}
         <path d="M6 34a18 18 0 0 1 9-15.6" fill="none" stroke="#FFB000" stroke-width="7"/>
         <path d="M24 34l9-12" stroke="#fff" stroke-width="4"/>
       </svg>
-      <b>Tankstopp</b>
+      <b>Tankstopp</b><span class="ver" id="ver"></span>
     </div>
     <div class="seg" id="mode" role="group" aria-label="Art der Einheit">
       <button type="button" data-m="train">Training</button>
@@ -207,15 +215,19 @@ button,input{font:inherit;color:inherit}
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Zettel fürs Oberrohr">
   <div class="zwrap">
-    <div class="strip" id="strip"></div>
-    <p class="zhint" id="zhint">Ausdrucken, ausschneiden, aufs Oberrohr kleben. Oder Screenshot.</p>
-    <div class="zbar"><button type="button" id="zPrint">Drucken</button><button type="button" id="zClose">Schließen</button></div>
+    <div class="ztabs" role="group" aria-label="Format"><button type="button" data-z="strip" aria-pressed="true">Vorbau-Streifen</button><button type="button" data-z="lock" aria-pressed="false">Sperrbildschirm</button></div>
+    <input class="zname" id="zName" type="text" maxlength="28" placeholder="Name oder Rennen (optional)" aria-label="Name auf dem Streifen">
+    <img class="zimg" id="zImg" alt="Verpflegungsplan als Bild">
+    <p class="zhint" id="zhint"></p>
+    <div class="zbar"><button type="button" id="zShare">Sichern</button><button type="button" id="zPrint">Drucken</button><button type="button" id="zClose">Schließen</button></div>
   </div>
 </div>
 
 <script>
 "use strict";
+const VERSION="2.2";
 const $=id=>document.getElementById(id);
+$("ver").textContent="v"+VERSION;
 const SPORT={
   rad:{name:"Rad",icon:'<svg viewBox="0 0 48 48"><circle cx="11" cy="32" r="8"/><circle cx="37" cy="32" r="8"/><path d="M11 32l8-14h13l5 14M19 18l7 14h-15M24 14h-6M30 18l2-5h4"/></svg>',
     int:[["Grundlage","Z1–Z2",7,"flat"],["Ausfahrt","gemischt",8.5,"wave"],["Intervalle","Z4–Z5",10,"int"]],flu:600},
@@ -230,7 +242,7 @@ const ICOL=["var(--c1)","var(--c2)","var(--c3)"];
 const WX={kalt:["Kalt",.7,0],mild:["Mild",1,0],warm:["Warm",1.3,1],heiss:["Heiß",1.6,2],drin:["Indoor",1.5,1]};
 const GELS=[20,25,30,40];
 
-let S={mode:"train",sport:"rad",dur:90,hm:600,int:0,w:75,next:false,wx:"mild",gel:25,caf:false};
+let S={zname:"",mode:"train",sport:"rad",dur:90,hm:600,int:0,w:75,next:false,wx:"mild",gel:25,caf:false};
 try{const s=JSON.parse(localStorage.getItem("essen-training")||"null"); if(s) S=Object.assign(S,s);}catch(e){}
 const save=()=>{try{localStorage.setItem("essen-training",JSON.stringify(S));}catch(e){}};
 
@@ -352,20 +364,104 @@ function out(){
     `</div><p class="note">${fast?"Zweite Einheit bald: schnell Verdauliches ist ok, auch Weißbrot oder Saft.":"Z. B. Skyr mit Haferflocken, Kakao, Hühnchen mit Reis, Eier auf Brot."}</p>`;
 
   $("out").innerHTML=h;
-  Z={d,khh,gels,cafI,flu,naNeed,na};
+  Z={d,khh,gels,cafI,flu,naNeed,na,fm,sp};
   if($("zOpen")) $("zOpen").onclick=zettel;
 }
 
-function zettel(){
-  $("strip").innerHTML=`<div class="t1">Tankstopp</div>
-    <div class="t2">${SPORT[S.sport].name}${race()?" · Rennen":""} · ${hm(Z.d)}<br>${Z.gels.length} Gels à ${S.gel} g · ${Z.khh} g/h</div>
-    ${Z.gels.map((t,i)=>`<div class="r${Z.cafI.includes(i)?" caf":""}"><span>${hm(t)}</span><span>${Z.cafI.includes(i)?"Koffein":"Gel"}</span></div>`).join("")}
-    <div class="t3">Trinken ${Z.flu} ml/h${Z.naNeed?`<br>Natrium ${Z.na} mg/h`:""}</div>`;
-  $("ov").classList.add("on"); $("zClose").focus();
+let ZK="strip", ZBLOB=null;
+const ZHINT={strip:"Sichern, ausdrucken (ca. 4 cm breit), mit Klebeband längs auf Vorbau oder Oberrohr.",
+  lock:"Bild sichern, dann in Fotos → Teilen → „Als Hintergrund“. So steht der Plan auf dem Sperrbildschirm."};
+// Ereignisse: Gels, Koffein, Flaschen
+function events(){
+  const ev=Z.gels.map((t,i)=>({t,k:Z.cafI.includes(i)?"caf":"gel",txt:Z.cafI.includes(i)?"KOFFEIN":"GEL",g:S.gel}));
+  if(Z.sp!=="swim"&&Z.d>=60){
+    const vol=Z.sp==="lauf"?500:750, every=Math.max(20,Math.round(vol/Z.fm*60/5)*5);
+    let k=2; for(let t=every;t<Z.d-10;t+=every,k++) ev.push({t,k:"bot",txt:(Z.sp==="lauf"?"FLASK ":"FLASCHE ")+k,g:null});
+  }
+  return ev.sort((a,b)=>a.t-b.t||(a.k==="bot"?1:-1));
 }
+function icon(g,k,x,y,s){
+  g.save(); g.translate(x,y); g.fillStyle="#000"; g.strokeStyle="#000"; g.lineWidth=s*.09;
+  if(k==="bot"){ g.fillRect(s*.32,0,s*.36,s*.14); g.beginPath(); g.moveTo(s*.2,s*.2); g.lineTo(s*.8,s*.2); g.lineTo(s*.8,s); g.lineTo(s*.2,s); g.closePath(); g.fill();
+    g.fillStyle="#21B8FF"; g.fillRect(s*.28,s*.45,s*.44,s*.12); }
+  else{ g.beginPath(); g.moveTo(s*.42,0); g.lineTo(s*.58,0); g.lineTo(s*.58,s*.12); g.lineTo(s*.78,s*.22); g.lineTo(s*.78,s); g.lineTo(s*.22,s); g.lineTo(s*.22,s*.22); g.lineTo(s*.42,s*.12); g.closePath(); g.fill();
+    if(k==="caf"){ g.fillStyle="#FF3B30"; g.beginPath(); g.moveTo(s*.56,s*.3); g.lineTo(s*.36,s*.64); g.lineTo(s*.5,s*.64); g.lineTo(s*.42,s*.92); g.lineTo(s*.66,s*.54); g.lineTo(s*.52,s*.54); g.closePath(); g.fill(); }
+    else { g.fillStyle="#FFD400"; g.fillRect(s*.3,s*.5,s*.4,s*.12); } }
+  g.restore();
+}
+async function drawZ(kind){
+  try{await document.fonts.load('800 40px "Saira Condensed"');await document.fonts.load('700 40px "Saira Condensed"');}catch(e){}
+  const F='"Saira Condensed",sans-serif', EV=events();
+  const COL={gel:"#FFD400",caf:"#FF3B30",bot:"#21B8FF"};
+  if(kind==="strip"){
+    const W=420,rowH=88,headH=150,footH=Z.naNeed?190:130;
+    const H=headH+EV.length*rowH+footH;
+    const c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+    g.fillStyle="#fff"; g.fillRect(0,0,W,H);
+    // Kopfband
+    g.fillStyle="#000"; g.fillRect(0,0,W,96);
+    g.fillStyle="#FFB000"; g.fillRect(0,96,W,8);
+    g.fillStyle="#fff"; g.font=`800 40px ${F}`; g.fillText("TANKSTOPP",22,60);
+    g.fillStyle="#FFB000"; g.font=`700 24px ${F}`; g.textAlign="right"; g.fillText(hm(Z.d),W-20,46); g.font=`600 20px ${F}`; g.fillText(`GELS À ${S.gel} G`,W-20,76); g.textAlign="left";
+    g.fillStyle="#000"; g.font=`700 22px ${F}`; g.fillText("ZEIT",22,136); g.fillText("VERPFLEGUNG",150,136);
+    let y=headH;
+    EV.forEach(e=>{
+      g.fillStyle="#000"; g.fillRect(0,y,W,3);
+      g.font=`700 52px ${F}`; g.fillText(hm(e.t),18,y+64);
+      g.fillStyle=COL[e.k]; g.fillRect(140,y+12,W-152,rowH-22);
+      icon(g,e.k,152,y+18,rowH-34);
+      g.fillStyle="#000"; g.font=`800 34px ${F}`; g.fillText(e.txt,212,y+58);
+      y+=rowH;
+    });
+    g.fillStyle="#000"; g.fillRect(0,y,W,3);
+    g.font=`700 26px ${F}`; g.fillText(`${Z.gels.length}× GEL · ${Z.khh} G/H`,22,y+44);
+    g.fillText(`TRINKEN ${Z.flu} ML/H`,22,y+80);
+    if(Z.naNeed) g.fillText(`NATRIUM ${Z.na} MG/H`,22,y+116);
+    const nm=(S.zname||"").trim();
+    if(nm){ g.font=`600 italic 26px ${F}`; g.fillStyle="#444"; g.fillText(nm,22,H-22); }
+    return c;
+  }
+  // Sperrbildschirm
+  const W=1179,H=2556,c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+  g.fillStyle="#000"; g.fillRect(0,0,W,H);
+  const n=EV.length, rowH=Math.min(118,Math.floor(1300/Math.max(1,n))), x=100, R=W-100;
+  let y=Math.max(760,900-(n>10?100:0));
+  g.fillStyle="#FFB000"; g.font=`800 70px ${F}`; g.fillText("TANKSTOPP",x,y);
+  g.fillStyle="#8A919C"; g.font=`600 44px ${F}`; y+=64;
+  g.fillText(`${SPORT[S.sport].name.toUpperCase()}${race()?" · RENNEN":""} · ${hm(Z.d)} · ${Z.khh} G/H`,x,y);
+  y+=36; g.fillStyle="#fff"; g.fillRect(x,y,R-x,5); y+=14;
+  EV.forEach(e=>{
+    g.fillStyle=COL[e.k]; g.fillRect(x,y+rowH*.18,14,rowH*.64);
+    g.fillStyle="#fff"; g.font=`700 ${Math.round(rowH*.78)}px ${F}`; g.fillText(hm(e.t),x+40,y+rowH*.8);
+    g.textAlign="right"; g.fillStyle=COL[e.k]; g.font=`700 ${Math.round(rowH*.48)}px ${F}`; g.fillText(e.txt,R,y+rowH*.74); g.textAlign="left";
+    y+=rowH; g.fillStyle="#24282F"; g.fillRect(x,y-2,R-x,2);
+  });
+  y+=74; g.fillStyle="#21B8FF"; g.font=`600 46px ${F}`; g.fillText(`TRINKEN ${Z.flu} ML/H`,x,y);
+  if(Z.naNeed){ y+=60; g.fillStyle="#E8E8E8"; g.fillText(`NATRIUM ${Z.na} MG/H`,x,y); }
+  return c;
+}
+async function showZ(kind){
+  ZK=kind;
+  document.querySelectorAll(".ztabs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.z===kind));
+  $("zName").style.display=kind==="strip"?"":"none";
+  const c=await drawZ(kind);
+  $("zImg").src=c.toDataURL("image/png"); $("zImg").className="zimg"+(kind==="lock"?" lock":"");
+  $("zhint").textContent=ZHINT[kind];
+  ZBLOB=await new Promise(r=>c.toBlob(r,"image/png"));
+}
+$("zName").addEventListener("input",e=>{S.zname=e.target.value;save();clearTimeout(window._zt);window._zt=setTimeout(()=>showZ(ZK),250);});
+function zettel(){ $("zName").value=S.zname||""; $("ov").classList.add("on"); showZ(ZK); $("zClose").focus(); }
+document.querySelectorAll(".ztabs button").forEach(b=>b.onclick=()=>showZ(b.dataset.z));
+$("zShare").onclick=async()=>{
+  try{
+    const f=new File([ZBLOB],`tankstopp-${ZK==="lock"?"sperrbildschirm":"zettel"}.png`,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return;}
+  }catch(e){ if(e&&e.name==="AbortError") return; }
+  $("zhint").textContent="Teilen geht hier nicht: Bild lange drücken und „Zu Fotos hinzufügen“ wählen.";
+};
 $("zClose").onclick=()=>$("ov").classList.remove("on");
 $("ov").addEventListener("click",e=>{if(e.target.id==="ov")$("ov").classList.remove("on");});
-$("zPrint").onclick=()=>{try{window.print();}catch(e){} $("zhint").textContent="Kein Druckfenster? In der Vorschau hier ist Drucken gesperrt: Screenshot machen. In der App am iPhone geht es.";};
+$("zPrint").onclick=()=>{try{window.print();}catch(e){} $("zhint").textContent="Kein Druckfenster? In der Vorschau hier ist Drucken gesperrt. In der App am iPhone geht es, sonst Bild sichern und aus Fotos drucken.";};
 
 function upd(){save();ui();out();}
 upd();
